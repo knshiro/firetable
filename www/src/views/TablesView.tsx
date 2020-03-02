@@ -74,14 +74,9 @@ const TablesView = () => {
   const router = useRouter();
   const [userRoles, setUserRoles] = useState<null | string[]>();
   const [userRegions, setUserRegions] = useState<null | string[]>();
-  const {
-    sections,
-    createTable,
-    userClaims,
-    tableActions,
-  } = useFiretableContext();
-
-  if (!userClaims?.roles || !sections) return <Loading />;
+  const { createTable, userClaims, tables } = useFiretableContext();
+  const sections = _groupBy(tables, "section");
+  if (!userClaims?.roles) return <Loading />;
   const { roles, regions } = userClaims;
   return (
     <main className={classes.root}>

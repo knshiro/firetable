@@ -1,0 +1,28 @@
+[debug] [2020-02-25T07:24:22.512Z] ----------------------------------------------------------------------
+[debug] [2020-02-25T07:24:22.514Z] Command:       /usr/local/bin/firebase /Users/shams/.cache/firebase/tools/lib/node_modules/firebase-tools/lib/bin/firebase depoly --project=antler-vc
+[debug] [2020-02-25T07:24:22.514Z] CLI Version:   7.10.0
+[debug] [2020-02-25T07:24:22.514Z] Platform:      darwin
+[debug] [2020-02-25T07:24:22.514Z] Node Version:  v10.17.0
+[debug] [2020-02-25T07:24:22.521Z] Time:          Tue Feb 25 2020 15:24:22 GMT+0800 (Central Indonesia Time)
+[debug] [2020-02-25T07:24:22.521Z] ----------------------------------------------------------------------
+[debug] [2020-02-25T07:24:22.521Z] 
+[error] Error: [object Object] is not a Firebase command
+[debug] [2020-02-25T07:24:22.532Z] TypeError: str.toLowerCase is not a function
+    at didYouMean (/Users/shams/.cache/firebase/tools/lib/node_modules/didyoumean/didYouMean-1.2.1.js:147:48)
+    at suggestCommands (/Users/shams/.cache/firebase/tools/lib/node_modules/firebase-tools/lib/index.js:28:22)
+    at Command.<anonymous> (/Users/shams/.cache/firebase/tools/lib/node_modules/firebase-tools/lib/index.js:57:14)
+    at Command.listener (/Users/shams/.cache/firebase/tools/lib/node_modules/commander/index.js:360:8)
+    at Command.emit (events.js:198:13)
+    at Command.EventEmitter.emit (domain.js:448:20)
+    at Command.parseArgs (/Users/shams/.cache/firebase/tools/lib/node_modules/commander/index.js:801:12)
+    at Command.parse (/Users/shams/.cache/firebase/tools/lib/node_modules/commander/index.js:563:21)
+    at Object.<anonymous> (/Users/shams/.cache/firebase/tools/lib/node_modules/firebase-tools/lib/bin/firebase.js:98:22)
+    at Module._compile (internal/modules/cjs/loader.js:776:30)
+    at Module._compile (pkg/prelude/bootstrap.js:1222:32)
+    at Object.Module._extensions..js (internal/modules/cjs/loader.js:787:10)
+    at Module.load (internal/modules/cjs/loader.js:651:32)
+    at tryModuleLoad (internal/modules/cjs/loader.js:591:12)
+    at Function.Module._load (internal/modules/cjs/loader.js:583:3)
+    at Function.Module.runMain (pkg/prelude/bootstrap.js:1316:12)
+[error] 
+[error] Error: An unexpected error has occurred.

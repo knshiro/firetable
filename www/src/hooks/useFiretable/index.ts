@@ -1,6 +1,8 @@
+import { useState } from "react";
 import useTable from "./useTable";
 import useTableConfig from "./useTableConfig";
-
+import useTables from "./useTables";
+import _find from "lodash/find";
 export type FiretableActions = {
   // TODO: Stricter types here
   column: {
@@ -21,6 +23,7 @@ export type FiretableActions = {
 };
 
 export type FiretableState = {
+  tables: any;
   orderBy: FiretableOrderBy;
   tablePath: string;
   config: { rowHeight: number };
@@ -42,17 +45,24 @@ const useFiretable = (
   filters?: FireTableFilter[],
   orderBy?: FiretableOrderBy
 ) => {
-  const [tableConfig, configActions] = useTableConfig(collectionName);
+  const [tables] = useTables();
+  const [table, setTable] = useState({ columns: [], rowHeight: 30 });
+  console.log(tables);
   const [tableState, tableActions] = useTable({
     path: collectionName,
     filters,
     orderBy,
   });
   /** set collection path of table */
-  const setTable = (collectionName: string, filters: FireTableFilter[]) => {
+  const setCollection = (
+    collectionName: string,
+    filters: FireTableFilter[]
+  ) => {
     if (collectionName !== tableState.path || filters !== tableState.filters) {
-      configActions.setTable(collectionName);
       tableActions.setTable(collectionName, filters);
+      const _table = _find(tables, t => t.collection === collectionName);
+      console.log(_table);
+      setTable(_table);
     }
   };
   const filterTable = (filters: FireTableFilter[]) => {
@@ -62,24 +72,31 @@ const useFiretable = (
     tableActions.dispatch({ orderBy });
   };
   const state: FiretableState = {
+    tables,
     orderBy: tableState.orderBy,
     tablePath: tableState.path,
     filters: tableState.filters,
-    columns: tableConfig.columns,
-    config: { rowHeight: tableConfig.rowHeight },
+    columns: table.columns,
+    config: { rowHeight: table.rowHeight },
     rows: tableState.rows,
     queryLimit: tableState.limit,
     loadingRows: tableState.loading,
-    loadingColumns: tableConfig.loading,
+    loadingColumns: false,
   };
   const actions: FiretableActions = {
     column: {
-      add: configActions.add,
-      resize: configActions.resize,
-      rename: configActions.rename,
-      update: configActions.updateColumn,
-      remove: configActions.remove,
-      reorder: configActions.reorder,
+      // add: table.add,
+      // resize: table.resize,
+      // rename: table.rename,
+      // update: table.updateColumn,
+      // remove: table.remove,
+      // reorder: table.reorder,
+      add: () => {},
+      resize: () => {},
+      rename: () => {},
+      update: () => {},
+      remove: () => {},
+      reorder: () => {},
     },
     row: {
       add: tableActions.addRow,
@@ -87,8 +104,9 @@ const useFiretable = (
       more: tableActions.moreRows,
     },
     table: {
-      updateConfig: configActions.updateConfig,
-      set: setTable,
+      updateConfig: () => {},
+      //updateConfig: table.updateConfig,
+      set: setCollection,
       orderBy: setOrder,
       filter: filterTable,
     },

@@ -10,7 +10,6 @@ import useFiretable, {
 } from "hooks/useFiretable";
 import useSettings from "hooks/useSettings";
 import { useAppContext } from "./appContext";
-
 type SelectedColumnHeader = {
   column: Column<any> & { [key: string]: any };
   anchorEl: PopoverProps["anchorEl"];
@@ -65,7 +64,6 @@ export const FiretableContextProvider: React.FC = ({ children }) => {
     row: number;
     column: string;
   }>();
-  const [tables, setTables] = useState<FiretableContextProps["tables"]>();
   const [sections, setSections] = useState<FiretableContextProps["sections"]>();
   const [settings, createTable] = useSettings();
   const [userRoles, setUserRoles] = useState<null | string[]>();
@@ -77,20 +75,6 @@ export const FiretableContextProvider: React.FC = ({ children }) => {
   ] = useState<SelectedColumnHeader | null>(null);
 
   const { currentUser } = useAppContext();
-  useEffect(() => {
-    const { tables } = settings;
-    if (tables && userRoles && !sections) {
-      const filteredTables = tables.filter(
-        table =>
-          !table.roles || table.roles.some(role => userRoles.includes(role))
-      );
-
-      const sections = _groupBy(filteredTables, "section");
-
-      setSections(sections);
-      setTables(filteredTables);
-    }
-  }, [settings, userRoles]);
 
   useEffect(() => {
     if (currentUser && !userClaims) {
@@ -132,7 +116,7 @@ export const FiretableContextProvider: React.FC = ({ children }) => {
         setSelectedCell,
         updateCell,
         createTable,
-        tables,
+        tables: tableState.tables,
         sections,
         userClaims,
         sideDrawerOpen,
