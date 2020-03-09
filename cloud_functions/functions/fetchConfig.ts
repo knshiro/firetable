@@ -3,7 +3,13 @@ import * as fs from "fs";
 import * as admin from "firebase-admin";
 // Initialize Firebase Admin
 
-const serviceAccount = require(`./firebase-credentials.json`);
+if (!process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+  throw new Error(
+    "Specify GOOGLE_APPLICATION_CREDENTIALS env variable with path to service-account.js"
+  );
+}
+
+const serviceAccount = require(process.env.GOOGLE_APPLICATION_CREDENTIALS);
 console.log(`Running on ${serviceAccount.project_id}`);
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),

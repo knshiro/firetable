@@ -1,61 +1,84 @@
-import algoliaFnsGenerator from "./algolia";
-import * as algoliaConfig from "./algolia/config.json";
-import collectionSyncFnsGenerator from "./collectionSync";
-import * as collectionSyncConfig from "./collectionSync/config.json";
+import algoliaFnsGenerator, { AlgoliaConfig } from "./algolia";
+import collectionSyncFnsGenerator, { CollectionSyncConfig } from "./collectionSync";
+import collectionSnapshotFnsGenerator, { CollectionHistoryConfig } from "./history";
+import permissionControlFnsGenerator, { PermissionsConfig } from "./permissions";
+import synonymsFnsGenerator, { SynonymConfig } from "./synonyms";
 
-import collectionSnapshotFnsGenerator from "./history";
+import { exportTableCallable } from "./export";
+import { sendEmailTemplateCallable } from "./callable";
 
-import * as collectionHistoryConfig from "./history/config.json";
-import permissionControlFnsGenerator from "./permissions";
-import * as permissionsConfig from "./permissions/config.json";
+import * as functions from "firebase-functions";
+// import * as admin from "firebase-admin";
+// import { SearchClient } from "algoliasearch";
 
-import synonymsFnsGenerator from "./synonyms";
-import synonymsConfig from "./synonyms/config";
+export interface FiretableConfig {
+  algolia?: AlgoliaConfig[];
+  sync?: CollectionSyncConfig[];
+  history?: CollectionHistoryConfig[];
+  synonyms?: SynonymConfig[];
+  permissions?: PermissionsConfig[];
+}
 
-export { exportTable } from "./export";
-import * as callableFns from "./callable";
+export default function(auth: any, db: any, searchClient: any, config: FiretableConfig = {}) {
 
-export const callable = callableFns;
-export const FT_algolia = algoliaConfig.reduce((acc: any, collection) => {
-  return { ...acc, [collection.name]: algoliaFnsGenerator(collection) };
-}, {});
+  const exportTable = functions.https.onCall(exportTableCallable(db));
+  const SendEmail = functions.https.onCall(sendEmailTemplateCallable(db));
 
-export const FT_sync = collectionSyncConfig.reduce((acc: any, collection) => {
-  return {
-    ...acc,
-    [`${`${`${collection.source}`
-      .replace(/\//g, "_")
-      .replace(/_{.*?}_/g, "_")}`}2${`${`${collection.target}`
-      .replace(/\//g, "_")
-      .replace(/_{.*?}_/g, "_")}`}`]: collectionSyncFnsGenerator(collection),
-  };
-}, {});
+  const FT_algolia = (config.algolia || []).reduce((acc: any, collection) => {
+    return { ...acc, [collection.name]: algoliaFnsGenerator(searchClient, collection) };
+  }, {});
 
-export const FT_history = collectionHistoryConfig.reduce(
-  (acc: any, collection) => {
+
+  const FT_sync = (config.sync || []).reduce((acc: any, collection: CollectionSyncConfig) => {
     return {
       ...acc,
-      [collection.name
+      [`${`${`${collection.source}`
         .replace(/\//g, "_")
-        .replace(/_{.*?}_/g, "_")]: collectionSnapshotFnsGenerator(collection),
+        .replace(/_{.*?}_/g, "_")}`}2${`${`${collection.target}`
+          .replace(/\//g, "_")
+          .replace(/_{.*?}_/g, "_")}`}`]: collectionSyncFnsGenerator(db, collection),
     };
-  },
-  {}
-);
+  }, {});
 
-export const FT_permissions = permissionsConfig.reduce(
-  (acc: any, collection) => {
+  const FT_history = (config.history || []).reduce(
+    (acc: any, collection: CollectionHistoryConfig) => {
+      return {
+        ...acc,
+        [collection.name
+          .replace(/\//g, "_")
+          .replace(/_{.*?}_/g, "_")]: collectionSnapshotFnsGenerator(db, collection),
+      };
+    },
+    {}
+  );
+  
+  const defaultPermissionsConfig = [{ "name": "userPermissions", "customTokenFields": ["regions", "roles"] }]
+
+  const FT_permissions = (config.permissions || defaultPermissionsConfig).reduce(
+    (acc: any, collection) => {
+      return {
+        ...acc,
+        [collection.name]: permissionControlFnsGenerator(auth, db, collection),
+      };
+    },
+    {}
+  );
+
+
+  const FT_synonyms = (config.synonyms || []).reduce((acc: any, collection: SynonymConfig) => {
     return {
       ...acc,
-      [collection.name]: permissionControlFnsGenerator(collection),
+      [collection.name]: synonymsFnsGenerator(db, collection),
     };
-  },
-  {}
-);
+  }, {});
 
-export const FT_synonyms = synonymsConfig.reduce((acc: any, collection) => {
   return {
-    ...acc,
-    [collection.name]: synonymsFnsGenerator(collection),
-  };
-}, {});
+    exportTable,
+    SendEmail,
+    FT_algolia,
+    FT_sync,
+    FT_history,
+    FT_permissions,
+    FT_synonyms,
+  }
+}

@@ -1,6 +1,6 @@
 import * as admin from "firebase-admin";
 import * as _ from "lodash";
-import { db } from "../config";
+
 const serverTimestamp = admin.firestore.FieldValue.serverTimestamp;
 /** fills template with doc values or default value if key doesn't exist */
 export const replacer = (data: any) => (m: string, key: string) => {
@@ -21,7 +21,7 @@ const emailGenerator = (
   return { subject, html };
 };
 
-export const sendEmail = async (templateId, row: any) => {
+export const sendEmail = async (db: FirebaseFirestore.Firestore, templateId, row: any) => {
   const emailTemplate = await db.doc(`emailTemplates/${templateId}`).get();
   const templateData = emailTemplate.data();
   if (!templateData || !templateData.subject || !templateData.body)

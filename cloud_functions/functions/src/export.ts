@@ -1,7 +1,6 @@
 import { parse as json2csv } from "json2csv";
-import * as functions from "firebase-functions";
-import { db } from "./config";
 import * as admin from "firebase-admin";
+
 const enum FieldType {
   simpleText = "SIMPLE_TEXT",
   longText = "LONG_TEXT",
@@ -39,8 +38,8 @@ const selectedColumnsReducer = (doc: any) => (
         ...accumulator,
         [currentColumn.key]: doc[currentColumn.key]
           ? doc[currentColumn.key]
-              .map((item: { downloadURL: string }) => item.downloadURL)
-              .join()
+            .map((item: { downloadURL: string }) => item.downloadURL)
+            .join()
           : "",
       };
     case FieldType.documentSelect:
@@ -48,14 +47,14 @@ const selectedColumnsReducer = (doc: any) => (
         ...accumulator,
         [currentColumn.key]: doc[currentColumn.key]
           ? doc[currentColumn.key]
-              .map((item: any) =>
-                currentColumn.config.primaryKeys.reduce(
-                  (labelAccumulator: string, currentKey: any) =>
-                    `${labelAccumulator} ${item.snapshot[currentKey]}`,
-                  ""
-                )
+            .map((item: any) =>
+              currentColumn.config.primaryKeys.reduce(
+                (labelAccumulator: string, currentKey: any) =>
+                  `${labelAccumulator} ${item.snapshot[currentKey]}`,
+                ""
               )
-              .join()
+            )
+            .join()
           : "",
       };
     case FieldType.checkBox:
@@ -86,70 +85,72 @@ const selectedColumnsReducer = (doc: any) => (
       };
   }
 };
-export const exportTable = functions.https.onCall(
-  async (
-    request: {
-      collectionPath: string;
-      filters: {
-        key: string;
-        operator: "==" | "<" | ">" | ">=" | "<=";
-        value: string;
-      }[];
-      limit?: number;
-      sort?:
+
+export function exportTableCallable(db: FirebaseFirestore.Firestore) {
+  return async (
+      request: {
+        collectionPath: string;
+        filters: {
+          key: string;
+          operator: "==" | "<" | ">" | ">=" | "<=";
+          value: string;
+        }[];
+        limit?: number;
+        sort?:
         | { field: string; direction: "asc" | "desc" }[]
         | { field: string; direction: "asc" | "desc" };
-      columns: { key: string; type: FieldType; config: any }[];
-      allFields?: boolean;
-    },
+        columns: { key: string; type: FieldType; config: any }[];
+        allFields?: boolean;
+      },
 
-    response
-  ) => {
-    const {
-      collectionPath,
-      filters,
-      sort,
-      limit,
-      columns,
-      //allFields,
-    } = request;
+      response
+    ) => {
+      const {
+        collectionPath,
+        filters,
+        sort,
+        limit,
+        columns,
+        //allFields,
+      } = request;
 
-    // set query path
-    let query:
-      | admin.firestore.CollectionReference
-      | admin.firestore.Query = db.collection(collectionPath);
-    // add filters
-    filters.forEach(filter => {
-      query = query.where(filter.key, filter.operator, filter.value);
-    });
-    // optional order results
-    if (sort) {
-      if (Array.isArray(sort)) {
-        sort.forEach(order => {
-          query = query.orderBy(order.field, order.direction);
-        });
-      } else {
-        query = query.orderBy(sort.field, sort.direction);
+      // set query path
+      let query:
+        | admin.firestore.CollectionReference
+        | admin.firestore.Query = db.collection(collectionPath);
+      // add filters
+      filters.forEach(filter => {
+        query = query.where(filter.key, filter.operator, filter.value);
+      });
+      // optional order results
+      if (sort) {
+        if (Array.isArray(sort)) {
+          sort.forEach(order => {
+            query = query.orderBy(order.field, order.direction);
+          });
+        } else {
+          query = query.orderBy(sort.field, sort.direction);
+        }
       }
+      //optional set query limit
+      if (limit) query = query.limit(limit);
+      const querySnapshot = await query.get();
+      const docs = querySnapshot.docs.map(doc => doc.data());
+      // generate csv Data
+      const data = docs.map((doc: any) => {
+        return columns.reduce(selectedColumnsReducer(doc), {});
+      });
+
+      // let data = docs;
+      // if (!allFields) {
+      //   console.log("");
+      //   docs.map((doc: any) => {
+      //     return columns.reduce(selectedColumnsReducer(doc), {});
+      //   });
+      // }
+
+      const csv = json2csv(data);
+      return csv;
     }
-    //optional set query limit
-    if (limit) query = query.limit(limit);
-    const querySnapshot = await query.get();
-    const docs = querySnapshot.docs.map(doc => doc.data());
-    // generate csv Data
-    const data = docs.map((doc: any) => {
-      return columns.reduce(selectedColumnsReducer(doc), {});
-    });
-
-    // let data = docs;
-    // if (!allFields) {
-    //   console.log("");
-    //   docs.map((doc: any) => {
-    //     return columns.reduce(selectedColumnsReducer(doc), {});
-    //   });
-    // }
-
-    const csv = json2csv(data);
-    return csv;
-  }
-);
+  ;
+}

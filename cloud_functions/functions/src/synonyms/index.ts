@@ -1,19 +1,22 @@
 import * as functions from "firebase-functions";
 
-import { db } from "../config";
-
 type synonymGroup = {
   listenerField: string;
   synonymField: string;
   transformer: Function;
 };
 
+export interface SynonymConfig {
+  name: string;
+  groups: synonymGroup[];
+}
+
 const synonyms = (docData, groups: synonymGroup[]) =>
   groups.reduce((update: any, currGroup) => {
     if (
       docData[currGroup.listenerField] &&
       docData[currGroup.synonymField] !==
-        currGroup.transformer(docData[currGroup.listenerField])
+      currGroup.transformer(docData[currGroup.listenerField])
     ) {
       return {
         ...update,
@@ -24,54 +27,56 @@ const synonyms = (docData, groups: synonymGroup[]) =>
     } else return update;
   }, {});
 
-/**
- *
- */
-const addSynonymOnUpdate = (groups: synonymGroup[]) => (
-  change: functions.Change<FirebaseFirestore.DocumentSnapshot>
-) => {
-  const beforeData = change.before.data();
-  const afterData = change.after.data();
 
-  if (!beforeData || !afterData) {
-    return false;
-  }
-  const updates = synonyms({ ...afterData, id: change.after.id }, groups);
-  if (Object.values(updates).length === 0) {
-    return false;
-  } else {
-    const docPath = change.after.ref.path;
-    return db.doc(docPath).update(updates);
-  }
-};
+function synonymsFnsGenerator(db: FirebaseFirestore.Firestore, collection: SynonymConfig) {
+  /**
+   *
+   */
+  const addSynonymOnUpdate = (groups: synonymGroup[]) => (
+    change: functions.Change<FirebaseFirestore.DocumentSnapshot>
+  ) => {
+    const beforeData = change.before.data();
+    const afterData = change.after.data();
 
-const addSynonymOnCreate = (groups: synonymGroup[]) => (
-  snapshot: FirebaseFirestore.DocumentSnapshot
-) => {
-  const docData = snapshot.data();
-  if (!docData) {
-    return false;
-  }
-  const updates = synonyms({ ...docData, id: snapshot.id }, groups);
-  if (Object.keys(updates).length === 0) {
-    return false;
-  } else {
-    const docPath = snapshot.ref.path;
-    return db.doc(docPath).update(updates);
-  }
-};
+    if (!beforeData || !afterData) {
+      return false;
+    }
+    const updates = synonyms({ ...afterData, id: change.after.id }, groups);
+    if (Object.values(updates).length === 0) {
+      return false;
+    } else {
+      const docPath = change.after.ref.path;
+      return db.doc(docPath).update(updates);
+    }
+  };
 
-/**
- *
- * @param collection configuration object
- */
-const synonymsFnsGenerator = collection => ({
-  onCreate: functions.firestore
-    .document(`${collection.name}/{docId}`)
-    .onCreate(addSynonymOnCreate(collection.groups)),
-  onUpdate: functions.firestore
-    .document(`${collection.name}/{docId}`)
-    .onUpdate(addSynonymOnUpdate(collection.groups)),
-});
+  const addSynonymOnCreate = (groups: synonymGroup[]) => (
+    snapshot: FirebaseFirestore.DocumentSnapshot
+  ) => {
+    const docData = snapshot.data();
+    if (!docData) {
+      return false;
+    }
+    const updates = synonyms({ ...docData, id: snapshot.id }, groups);
+    if (Object.keys(updates).length === 0) {
+      return false;
+    } else {
+      const docPath = snapshot.ref.path;
+      return db.doc(docPath).update(updates);
+    }
+  };
 
+  /**
+   *
+   * @param collection configuration object
+   */
+  return {
+    onCreate: functions.firestore
+      .document(`${collection.name}/{docId}`)
+      .onCreate(addSynonymOnCreate(collection.groups)),
+    onUpdate: functions.firestore
+      .document(`${collection.name}/{docId}`)
+      .onUpdate(addSynonymOnUpdate(collection.groups)),
+  };
+}
 export default synonymsFnsGenerator;
