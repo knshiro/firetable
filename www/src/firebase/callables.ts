@@ -2,7 +2,7 @@ import { functions } from "./index";
 import { FireTableFilter } from "../hooks/useFiretable";
 
 export enum CLOUD_FUNCTIONS {
-  exportTable = "exportTable",
+  exportTable = "firetable-exportTable",
 }
 
 export const cloudFunction = (

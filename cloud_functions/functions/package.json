@@ -22,10 +22,9 @@
     "lodash": "^4.17.15"
   },
   "devDependencies": {
-    "@types/algoliasearch": "^3.34.5",
     "@types/json2csv": "^4.5.0",
     "@types/lodash": "^4.14.149",
-    "algoliasearch": "^4.1.0",
+    "algoliasearch": "4.0.0",
     "firebase-admin": "^8.9.2",
     "firebase-functions": "^3.3.0",
     "husky": "^4.2.3",

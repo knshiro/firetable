@@ -8,8 +8,8 @@ import { exportTableCallable } from "./export";
 import { sendEmailTemplateCallable } from "./callable";
 
 import * as functions from "firebase-functions";
-// import * as admin from "firebase-admin";
-// import { SearchClient } from "algoliasearch";
+import * as admin from "firebase-admin";
+import { SearchClient } from "algoliasearch";
 
 export interface FiretableConfig {
   algolia?: AlgoliaConfig[];
@@ -19,10 +19,13 @@ export interface FiretableConfig {
   permissions?: PermissionsConfig[];
 }
 
-export default function(auth: any, db: any, searchClient: any, config: FiretableConfig = {}) {
+// Hack to get the compiler not to emit functions.Requests as generic following express-serve-static-core
+type FirebaseHttpsFunction = functions.TriggerAnnotated & ((req: functions.Request, resp: functions.Response) => void) & functions.Runnable<any>;
 
-  const exportTable = functions.https.onCall(exportTableCallable(db));
-  const SendEmail = functions.https.onCall(sendEmailTemplateCallable(db));
+export default function(auth: admin.auth.Auth, db: FirebaseFirestore.Firestore, searchClient: SearchClient, config: FiretableConfig = {}) {
+
+  const exportTable: FirebaseHttpsFunction = functions.https.onCall(exportTableCallable(db));
+  const SendEmail: FirebaseHttpsFunction = functions.https.onCall(sendEmailTemplateCallable(db));
 
   const FT_algolia = (config.algolia || []).reduce((acc: any, collection) => {
     return { ...acc, [collection.name]: algoliaFnsGenerator(searchClient, collection) };
