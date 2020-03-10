@@ -4,12 +4,10 @@ import collectionSnapshotFnsGenerator, { CollectionHistoryConfig } from "./histo
 import permissionControlFnsGenerator, { PermissionsConfig } from "./permissions";
 import synonymsFnsGenerator, { SynonymConfig } from "./synonyms";
 
-import { exportTableCallable } from "./export";
-import { sendEmailTemplateCallable } from "./callable";
+import { exportTable } from "./export";
+import { SendEmail } from "./callable";
 
-import * as functions from "firebase-functions";
-import * as admin from "firebase-admin";
-import { SearchClient } from "algoliasearch";
+// import * as functions from "firebase-functions";
 
 export interface FiretableConfig {
   algolia?: AlgoliaConfig[];
@@ -20,15 +18,12 @@ export interface FiretableConfig {
 }
 
 // Hack to get the compiler not to emit functions.Requests as generic following express-serve-static-core
-type FirebaseHttpsFunction = functions.TriggerAnnotated & ((req: functions.Request, resp: functions.Response) => void) & functions.Runnable<any>;
+// type FirebaseHttpsFunction = functions.TriggerAnnotated & ((req: functions.Request, resp: functions.Response) => void) & functions.Runnable<any>;
 
-export default function(auth: admin.auth.Auth, db: FirebaseFirestore.Firestore, searchClient: SearchClient, config: FiretableConfig = {}) {
-
-  const exportTable: FirebaseHttpsFunction = functions.https.onCall(exportTableCallable(db));
-  const SendEmail: FirebaseHttpsFunction = functions.https.onCall(sendEmailTemplateCallable(db));
+export default function(config: FiretableConfig = {}) {
 
   const FT_algolia = (config.algolia || []).reduce((acc: any, collection) => {
-    return { ...acc, [collection.name]: algoliaFnsGenerator(searchClient, collection) };
+    return { ...acc, [collection.name]: algoliaFnsGenerator(collection) };
   }, {});
 
 
@@ -39,7 +34,7 @@ export default function(auth: admin.auth.Auth, db: FirebaseFirestore.Firestore, 
         .replace(/\//g, "_")
         .replace(/_{.*?}_/g, "_")}`}2${`${`${collection.target}`
           .replace(/\//g, "_")
-          .replace(/_{.*?}_/g, "_")}`}`]: collectionSyncFnsGenerator(db, collection),
+          .replace(/_{.*?}_/g, "_")}`}`]: collectionSyncFnsGenerator(collection),
     };
   }, {});
 
@@ -49,7 +44,7 @@ export default function(auth: admin.auth.Auth, db: FirebaseFirestore.Firestore, 
         ...acc,
         [collection.name
           .replace(/\//g, "_")
-          .replace(/_{.*?}_/g, "_")]: collectionSnapshotFnsGenerator(db, collection),
+          .replace(/_{.*?}_/g, "_")]: collectionSnapshotFnsGenerator(collection),
       };
     },
     {}
@@ -61,7 +56,7 @@ export default function(auth: admin.auth.Auth, db: FirebaseFirestore.Firestore, 
     (acc: any, collection) => {
       return {
         ...acc,
-        [collection.name]: permissionControlFnsGenerator(auth, db, collection),
+        [collection.name]: permissionControlFnsGenerator(collection),
       };
     },
     {}
@@ -71,7 +66,7 @@ export default function(auth: admin.auth.Auth, db: FirebaseFirestore.Firestore, 
   const FT_synonyms = (config.synonyms || []).reduce((acc: any, collection: SynonymConfig) => {
     return {
       ...acc,
-      [collection.name]: synonymsFnsGenerator(db, collection),
+      [collection.name]: synonymsFnsGenerator(collection),
     };
   }, {});
 
