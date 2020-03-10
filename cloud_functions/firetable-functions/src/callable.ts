@@ -6,7 +6,7 @@ import { hasAnyRole } from "./utils/auth";
 
 const serverTimestamp = admin.firestore.FieldValue.serverTimestamp;
 
-const sendEmailTemplateCallable = async (
+export const sendEmailTemplateCallable = async (
   data: {
     ref: {
       id: string;
@@ -43,5 +43,3 @@ const sendEmailTemplateCallable = async (
     success: true,
   };
 };
-
-export const SendEmail = functions.https.onCall(sendEmailTemplateCallable);

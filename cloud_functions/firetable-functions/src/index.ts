@@ -4,10 +4,13 @@ import collectionSnapshotFnsGenerator, { CollectionHistoryConfig } from "./histo
 import permissionControlFnsGenerator, { PermissionsConfig } from "./permissions";
 import synonymsFnsGenerator, { SynonymConfig } from "./synonyms";
 
-import { exportTable } from "./export";
-import { SendEmail } from "./callable";
+import { exportTableCallable } from "./export";
+import { sendEmailTemplateCallable } from "./callable";
 
-// import * as functions from "firebase-functions";
+// Hack to get the compiler not to emit functions.Requests as generic following express-serve-static-core
+
+import * as functions from "firebase-functions";
+type FirebaseHttpsFunction = functions.TriggerAnnotated & ((req: functions.Request, resp: functions.Response) => void) & functions.Runnable<any>;
 
 export interface FiretableConfig {
   algolia?: AlgoliaConfig[];
@@ -17,10 +20,10 @@ export interface FiretableConfig {
   permissions?: PermissionsConfig[];
 }
 
-// Hack to get the compiler not to emit functions.Requests as generic following express-serve-static-core
-// type FirebaseHttpsFunction = functions.TriggerAnnotated & ((req: functions.Request, resp: functions.Response) => void) & functions.Runnable<any>;
-
 export default function(config: FiretableConfig = {}) {
+
+  const exportTable: FirebaseHttpsFunction = functions.https.onCall(exportTableCallable)
+  const SendEmail: FirebaseHttpsFunction = functions.https.onCall(sendEmailTemplateCallable);
 
   const FT_algolia = (config.algolia || []).reduce((acc: any, collection) => {
     return { ...acc, [collection.name]: algoliaFnsGenerator(collection) };
