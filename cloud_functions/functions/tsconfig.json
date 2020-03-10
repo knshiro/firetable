@@ -1,31 +1,15 @@
 {
   "compilerOptions": {
-    /* Basic Options */
-    "target": "es2017",
     "module": "commonjs",
-    "declaration": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
     "outDir": "lib",
-
-    /* Strict Type-Checking Options */
+    "sourceMap": true,
     "strict": true,
     "noImplicitAny": false,
-
-    /* Additional Checks */
-    "noUnusedLocals": true,
-    "noImplicitReturns": true,
-
-    /* Module Resolution Options */
-    "baseUrl": "src/",
-    "esModuleInterop": true,               
     "resolveJsonModule": true,
-    
-    /* Source Map Options */
-    "sourceMap": true,
-
-    /* Advanced Options */
-    "forceConsistentCasingInFileNames": true
+    "target": "es2017"
   },
   "compileOnSave": true,
-  "include": ["src", "fetchConfig.ts"],
-  "exclude": ["node_modules", "**/__tests__/*"]
+  "include": ["src", "fetchConfig.ts"]
 }
