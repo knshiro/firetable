@@ -1,5 +1,4 @@
 import { parse as json2csv } from "json2csv";
-import * as functions from "firebase-functions";
 import { db } from "./config";
 import * as admin from "firebase-admin";
 const enum FieldType {
@@ -86,7 +85,7 @@ const selectedColumnsReducer = (doc: any) => (
       };
   }
 };
-export const exportTable = functions.https.onCall(
+export const exportTableCallable =
   async (
     request: {
       collectionPath: string;
@@ -152,4 +151,3 @@ export const exportTable = functions.https.onCall(
     const csv = json2csv(data);
     return csv;
   }
-);
