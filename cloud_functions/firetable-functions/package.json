@@ -1,8 +1,8 @@
 {
   "name": "@knshiro/firetable-functions",
-  "version": "0.0.4",
+  "version": "0.0.7",
   "description": "Attempt to package AntlerVC firetable cloud functions",
-  "main": "lib/src/index.js",
+  "main": "lib/index.js",
   "files": [
     "src/",
     "lib/"
@@ -10,7 +10,7 @@
   "directories": {
     "lib": "lib"
   },
-  "types": "lib/src/index.d.ts",
+  "types": "lib/index.d.ts",
   "scripts": {
     "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -22,15 +22,17 @@
   "author": "Ugo Batailard",
   "license": "ISC",
   "bin": {
-    "fetch-config": "lib/fetchConfig.js"
+    "firetable": "lib/cli/index.js"
   },
   "dependencies": {
+    "commander": "^4.1.1",
     "json2csv": "^4.5.4",
     "lodash": "^4.17.15"
   },
   "devDependencies": {
     "@types/json2csv": "^4.5.0",
     "@types/lodash": "^4.14.149",
+    "@types/node": "^13.9.0",
     "algoliasearch": "4.0.0",
     "firebase-admin": "^8.9.2",
     "firebase-functions": "^3.3.0",
